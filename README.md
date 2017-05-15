@@ -4,6 +4,8 @@ uses official cleverbot api to get chatbot answers when activated
 
 if someone knows a free alternative please say, cleverbot api is now freemium and no one wants to pay for this
 
+https://www.cleverbot.com/api/howto/
+
 it is possible to activate this mode vocally, it starts of by default
 
 # usage
