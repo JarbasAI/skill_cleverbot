@@ -8,6 +8,11 @@ https://www.cleverbot.com/api/howto/
 
 it is possible to activate this mode vocally, it starts of by default
 
+# requirements
+
+converse method [PR#756](https://github.com/MycroftAI/mycroft-core/pull/756)
+
+
 # usage
 
 to activate this skill
