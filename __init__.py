@@ -75,7 +75,7 @@ class CleverbotSkill(MycroftSkill):
             try:
                 self.api = self.config["CleverbotAPI"]
             except:
-                self.api = "CC27mJvsulNAByg3_QZ5-kOGTjA"
+                self.api = "here"
         self.active = False
         self.parser = None
         self.service = None
