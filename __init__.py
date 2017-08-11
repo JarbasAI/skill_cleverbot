@@ -15,125 +15,98 @@
 # You should have received a copy of the GNU General Public License
 # along with Mycroft Core.  If not, see <http://www.gnu.org/licenses/>.
 
-import urllib
-import json
 
-from adapt.intent import IntentBuilder
-from mycroft.skills.intent_service import IntentParser
-from mycroft.skills.core import MycroftSkill
+from cleverwrap import CleverWrap
+import random
+from mycroft.skills.core import FallbackSkill
 from mycroft.util.log import getLogger
+#from mycroft.skills.intent_service import IntentParser
+from adapt.intent import IntentBuilder
 
 __author__ = 'jarbas'
 
-logger = getLogger(__name__)
+LOGGER = getLogger(__name__)
 
 
-class Cleverbot:
-
-    def __init__(self, apikey):
-
-        self.URL = 'https://www.cleverbot.com/getreply'
-        self.apiUrl = "{}?key={}&wrapper=python-wrapper".format(self.URL, apikey)
-        self.ERRORS = {401: 'Cleverbot API key not valid',
-                       404: 'Cleverbot API not found',
-                       413: 'Cleverbot API request too large. Please limit requests to 8KB',
-                       502: 'Unable to get reply from API server, please contact Cleverbot Support',
-                       503: 'Cleverbot API: Too many requests from client',
-                       504: 'Unable to get reply from API server, please contact Cleverbot Support'}
-
-        try:
-                self.request = urllib.urlopen(self.apiUrl)
-
-
-        except urllib.HTTPError as err:
-                if err.code in self.ERRORS:
-                        print self.ERRORS[err.code]
-                else:
-                        raise
-
-        self.response = json.loads(self.request.read())
-        self.cs = self.response['cs']
-        self.log = []
-
-    def ask(self, question):
-        self.log.append(question)
-        question = urllib.quote_plus(question.encode('utf8'))
-        qUrl = "{}&input={}&cs={}".format(self.apiUrl, question, self.cs)
-        response = json.loads(urllib.urlopen(qUrl).read())
-        self.cs = response['cs']
-        self.log.append(response['output'])
-        return response['output']
-
-
-class CleverbotSkill(MycroftSkill):
+class CleverbotFallback(FallbackSkill):
     def __init__(self):
-        super(CleverbotSkill, self).__init__(name="CleverbotSkill")
-        # initialize your variables
-        try:
-            self.api = self.config_apis["CleverbotAPI"]
-        except:
-            try:
-                self.api = self.config["CleverbotAPI"]
-            except:
-                self.api = "here"
-        self.active = False
+        super(CleverbotFallback, self).__init__()
+        self.reload_skill = False
+        self.chat_mode = False
         self.parser = None
-        self.service = None
-        self.TIMEOUT = 2
-        self.cb = Cleverbot(self.api)
+        try:
+            api_key = self.config_core.get("APIS")["CleverbotApi"]
+        except:
+            api_key = self.config.get("CleverbotAPI")
+        self.cleverbot = CleverWrap(api_key)
 
     def initialize(self):
+        #self.parser = IntentParser(self.emitter)
+        self.register_fallback(self.handle_fallback, 50)
+        off_intent = IntentBuilder("CleverbotOffIntent"). \
+            require("StopKeyword").require("CleverbotKeyword").build()
+        on_intent = IntentBuilder("CleverbotOnIntent"). \
+            require("StartKeyword").require("CleverbotKeyword").build()
+        ask_intent = IntentBuilder("askCleverbotIntent"). \
+            require("chatbotQuery").build()
+        demo_intent = IntentBuilder("CleverbotdemoIntent"). \
+            require("ChatBotDemo").require("CleverbotKeyword").build()
         # register intents
-        self.intent_parser = IntentParser(self.emitter)
-        self.build_intents()
+        self.register_intent(off_intent, self.handle_chat_stop_intent)
+        self.register_intent(on_intent, self.handle_chat_start_intent)
+        self.register_intent(ask_intent, self.handle_ask_Cleverbot_intent)
+        self.register_intent(demo_intent, self.handle_talk_to_Cleverbot_intent)
 
-    def build_intents(self):
-        # build intents
-        deactivate_intent = IntentBuilder("DeactivateCleverBotIntent") \
-            .require("deactivateCleverBotKeyword").build()
-        activate_intent=IntentBuilder("ActivateCleverbotIntent") \
-            .require("activateCleverBotKeyword").build()
-        talk_yourself_intent = IntentBuilder("TalkSelfCleverbotIntent") \
-            .require("SelfChatCleverBotKeyword").build()
+    def handle_ask_Cleverbot_intent(self, message):
+        query = message.data.get("chatbotQuery")
+        self.speak(self.ask_cleverbot(query))
 
-        # register intents
-        self.register_intent(deactivate_intent, self.handle_deactivate_intent)
-        self.register_intent(activate_intent, self.handle_activate_intent)
-        self.register_intent(talk_yourself_intent, self.handle_talk_to_yourself_intent)
-
-    def handle_deactivate_intent(self, message):
-        self.active = False
-        self.speak_dialog("cleverbot_off")
-
-    def handle_activate_intent(self, message):
-        self.active = True
-        self.speak_dialog("cleverbot_on")
-
-    def handle_talk_to_yourself_intent(self, message):
-        text = "hello"
-        self.speak(text)
-        for i in range(0, 50):
-            text = self.cb.ask(text)
+    def handle_talk_to_Cleverbot_intent(self, message):
+        text = random.choice["Hello", "Do you believe in god", "lets chat",
+                             "lets play a game", "are you a terminator",
+                             "are you human", "are you alive", "do you love me", "are you evil"]
+        for i in range(0, 100):
+            text = self.ask_cleverbot(text)
             self.speak(text)
 
-    def stop(self):
-        if self.active:
-           self.handle_deactivate_intent("global stop")
+    def handle_chat_start_intent(self, message):
+        self.chat_mode = True
+        self.speak_dialog("chatbotON")
 
-    def converse(self, transcript, lang="en-us"):
-        if not self.active:
-            return False
-        # check if some of the intents will be handled
-        intent, id = self.intent_parser.determine_intent(transcript[0])
-        if id == self.skill_id:
-            # some intent will be triggered inside this skill (off)
-            return False
-        else:
-            answer = self.cb.ask(transcript[0])
+    def handle_chat_stop_intent(self, message):
+        self.chat_mode = False
+        self.speak_dialog("chatbotOFF")
+
+    def ask_cleverbot(self, utterance):
+        response = self.cleverbot.say(utterance)
+        return response
+
+    def handle_fallback(self, message):
+        utterance = message.data.get("utterance")
+        self.context = self.get_context(message.context)
+        answer = self.ask_cleverbot(utterance)
+        if answer != "":
             self.speak(answer)
-        # tell intent skill you handled utterance
-        return True
+            return True
+        return False
+
+   # def converse(self, utterances, lang="en-us"):
+   #     # chat flag over-rides all skills
+   #     if self.chat_mode:
+   #         intent, id = self.parser.determine_intent(utterances[0])
+   #         if id == self.skill_id:
+   #             # some intent from this skill will trigger
+   #             return False
+   #         self.speak(self.ask_cleverbot(utterances[0]), expect_response=True)
+   #         return True
+   #     return False
+
+    def stop(self):
+        self.cleverbot.reset()
+        if self.chat_mode:
+            self.chat_mode = False
+            self.speak_dialog("chatbotOFF")
 
 
 def create_skill():
-    return CleverbotSkill()
+    return CleverbotFallback()
