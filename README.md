@@ -1,31 +1,31 @@
 # Cleverbot skill
 
-uses official cleverbot api to get chatbot answers when activated
+uses official cleverbot api to get chatbot answers on intent failure or on
+demand
 
-if someone knows a free alternative please say, cleverbot api is now freemium and no one wants to pay for this
+cleverbot api is now freemium
+
+
+# api
+
+add to config or in init.py
 
 https://www.cleverbot.com/api/howto/
-
-it is possible to activate this mode vocally, it starts of by default
-
-# requirements
-
-converse method [PR#756](https://github.com/MycroftAI/mycroft-core/pull/756)
 
 
 # usage
 
-to activate this skill
+demonstrate cleverbot
 
-        start clever bot
+        cleverbot to cleverbot chat
 
-to de-activate
+ask cleverbot something
 
-        stop clever bot
+        get answer to something fom cleverbot
 
 # output
 
-            Input: talk to yourself
+            Input: talk to cleverbot
             2017-05-15 19:47:49,325 - CLIClient - INFO - Speak: Hello
             2017-05-15 19:47:51,976 - CLIClient - INFO - Speak: How are you?
             2017-05-15 19:47:53,351 - CLIClient - INFO - Speak: I asked first!
