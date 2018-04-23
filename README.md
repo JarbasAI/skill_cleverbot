@@ -3,12 +3,9 @@
 uses official cleverbot api to get chatbot answers on intent failure or on
 demand
 
-cleverbot api is now freemium
-
-
 # api
 
-add to config or in init.py
+after installing add your api key to skill settings in home.mycroft.ai
 
 https://www.cleverbot.com/api/howto/
 
