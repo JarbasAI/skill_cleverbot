@@ -1,0 +1,22 @@
+{
+    "name": "Cleverbot Skill",
+    "skillMetadata": {
+        "sections": [
+            {
+                "name": "Cleverbot Api",
+                "fields": [
+                    {
+                        "type": "label",
+                        "label": "Get yours here http://www.cleverbot.com/api"
+                    },
+                    {
+                        "name": "key",
+                        "type": "text",
+                        "label": "key",
+                        "value": "XXXXXX"
+                    }
+                ]
+            }
+        ]
+    }
+}

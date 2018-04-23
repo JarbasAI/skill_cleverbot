@@ -31,18 +31,12 @@ LOGGER = getLogger(__name__)
 class CleverbotFallback(FallbackSkill):
     def __init__(self):
         super(CleverbotFallback, self).__init__()
-        self.reload_skill = False
         self.chat_mode = False
         self.parser = None
-        try:
-            api_key = self.config_core.get("APIS")["CleverbotApi"]
-        except:
-            api_key = self.config.get("CleverbotAPI")
-        self.cleverbot = CleverWrap(api_key)
 
     def initialize(self):
         #self.parser = IntentParser(self.emitter)
-        self.register_fallback(self.handle_fallback, 50)
+        self.register_fallback(self.handle_fallback, 90)
         off_intent = IntentBuilder("CleverbotOffIntent"). \
             require("StopKeyword").require("CleverbotKeyword").build()
         on_intent = IntentBuilder("CleverbotOnIntent"). \
@@ -52,10 +46,16 @@ class CleverbotFallback(FallbackSkill):
         demo_intent = IntentBuilder("CleverbotdemoIntent"). \
             require("ChatBotDemo").require("CleverbotKeyword").build()
         # register intents
-        self.register_intent(off_intent, self.handle_chat_stop_intent)
-        self.register_intent(on_intent, self.handle_chat_start_intent)
+        #self.register_intent(off_intent, self.handle_chat_stop_intent)
+        #self.register_intent(on_intent, self.handle_chat_start_intent)
         self.register_intent(ask_intent, self.handle_ask_Cleverbot_intent)
         self.register_intent(demo_intent, self.handle_talk_to_Cleverbot_intent)
+
+        if "api_key" not in self.settings:
+            self.speak("you need an api key for cleverbot")
+            raise AttributeError("No cleverbot api key provided")
+
+        self.cleverbot = CleverWrap(self.settings["api_key"])
 
     def handle_ask_Cleverbot_intent(self, message):
         query = message.data.get("chatbotQuery")
